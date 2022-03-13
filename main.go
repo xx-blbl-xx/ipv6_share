@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"io/ioutil"
 	xlog "ipv6_share/log"
@@ -14,7 +13,7 @@ import (
 type appObj struct {
 	maxFileNum  int
 	maxDepth    int
-	shareFiles  []*shareFileInfo
+	shareFiles  map[string]*shareFileInfo
 	currentPath string
 	version     string
 	publicIpv6s []net.IP
@@ -31,7 +30,7 @@ func main() {
 		flag.Usage()
 		return
 	}
-	fmt.Println(*pathStr)
+	xlog.Info(*pathStr)
 
 	app.setFileList(strings.Split(*pathStr, ";"))
 	xlog.Warn("app info", app)
@@ -46,6 +45,9 @@ func main() {
 	addr := "127.0.0.1:1228"
 	engine := gin.Default()
 	router(engine)
+
+	go checkPeerAlive()
+
 	err := engine.Run(addr)
 	if err != nil {
 		xlog.Error("listen failed", addr, err)
@@ -108,7 +110,7 @@ func getPwd() string {
 }
 
 func (a *appObj) setFileList(paths []string) {
-	a.shareFiles = make([]*shareFileInfo, 0, a.maxFileNum)
+	a.shareFiles = make(map[string]*shareFileInfo, a.maxFileNum)
 	for _, path := range paths {
 		traverseDir(path, a.maxDepth, a.maxFileNum, a)
 	}
@@ -148,6 +150,6 @@ func traverseDir(path string, depth, maxFileNum int, app *appObj) {
 			xlog.Error("newFileInfo err", err)
 			continue
 		}
-		app.shareFiles = append(app.shareFiles, fi)
+		app.shareFiles[fi.Hash] = fi
 	}
 }

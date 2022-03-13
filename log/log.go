@@ -41,14 +41,10 @@ func Warn(info string, v ...interface{}) {
 }
 
 func Info(info string, v ...interface{}) {
-	if len(v) == 0 {
-		infoLogger.out(info)
-		return
-	}
 	infoLogger.out(info, v)
 }
 
-func (l *myLogger) out(info string, objs ...interface{}) {
+func (l *myLogger) out(info string, objs []interface{}) {
 	str := info
 	if len(objs) > 0 {
 		for k, v := range objs {
